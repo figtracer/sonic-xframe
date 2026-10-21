@@ -12,4 +12,6 @@ The whole frame body is one tag:
 
 - `sonic.js` builds the page, loads `sonic1.bin` next to it, checks its hash, and starts the emulator
   (xframes' own `/gba/nostalgist.js`, core `genesis_plus_gx`).
+- `act1.state` is a Genesis Plus GX save state on the Green Hill Act 1 title card; Play loads it so the game starts
+  in Act 1 instead of the intro and attract-mode demo.
 - Rebuild the ROM: `lua build.lua` in s1disasm, which writes `s1built.bin`.

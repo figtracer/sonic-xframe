@@ -4,6 +4,8 @@
 const SHA256 = "1b7f6635bd713f37f3c2f44f302b872c2e3c5f56e63637918dad4637146900fd";
 const ROM = new URL("sonic1.bin", import.meta.url).href;
 const TITLE = new URL("title.png", import.meta.url).href;
+// Save state taken on the "Green Hill Zone Act 1" title card, so Play skips the intro and the attract-mode demo.
+const STATE = new URL("act1.state", import.meta.url).href;
 const BUTTONS = { arrowup: "up", w: "up", arrowdown: "down", s: "down", arrowleft: "left", a: "left", arrowright: "right", d: "right", " ": "b", z: "b", j: "b", x: "a", k: "a", c: "y", enter: "start" };
 
 document.head.append(Object.assign(document.createElement("style"), { textContent: `
@@ -36,8 +38,8 @@ app.innerHTML = `
     <p id="status">Sonic the Hedgehog (1991), rebuilt from source</p>
     <div id="progress" hidden><div></div></div>
     <button id="play" type="button" disabled>Loading…</button>
-    <p class="note" id="keys">Arrows move, Space, Z or X jumps, Enter starts and pauses.</p>
-    <p class="note" id="touch" hidden>Your left thumb moves, Jump jumps, Start starts and pauses.</p>
+    <p class="note" id="keys">Arrows move, Space, Z or X jumps, Enter pauses.</p>
+    <p class="note" id="touch" hidden>Your left thumb moves, Jump jumps, Start pauses.</p>
     <p class="note">Assembled bit-perfect (REV01) from the <a href="https://github.com/sonicretro/s1disasm" target="_blank" rel="noopener">Sonic Retro disassembly</a>, running in Genesis Plus GX.</p>
   </div>
   <div id="pad" hidden><div id="stick"><i></i></div><button id="start" type="button" data-button="start">Start</button><button id="jump" type="button" data-button="b">Jump</button></div>`;
@@ -69,6 +71,7 @@ if (!new URLSearchParams(location.search).has("xframes-card")) {
     if (hex(await crypto.subtle.digest("SHA-256", bytes)) !== SHA256) throw new Error("the ROM data is damaged");
     return bytes;
   });
+  const state = fetch(STATE).then(response => response.ok ? response.blob() : null, () => null);
   const emulator = import(xframe.context.origin + "/gba/nostalgist.js");
 
   let game = null;
@@ -89,6 +92,8 @@ if (!new URLSearchParams(location.search).has("xframes-card")) {
         retroarchConfig: { video_font_enable: false, menu_enable_widgets: false, savestate_thumbnail_enable: false, video_smooth: false, audio_latency: 96 },
       });
       game.resize({ width: 640, height: 480 });
+      const saved = await state;
+      if (saved) await game.loadState(saved).catch(() => {});
       cover.hidden = true;
       pad.hidden = !touch;
       canvas.focus();
